@@ -1,6 +1,6 @@
 # lms-ui
 
-**Malaka** — korporativ LMS (xodimlarni o'qitish va test qilish) uchun frontend.
+**O‘quv markazi** — korporativ LMS (xodimlarni o'qitish va test qilish) uchun frontend.
 
 Backend va API hujjati: **lms-backend** repozitoriysi → `API.md`.
 
@@ -33,14 +33,14 @@ API_URL=https://boshqa-server.uz npm run dev
 
 | Rol | Telefon | Parol |
 |---|---|---|
-| Xodim (jarayonda) | 90 111 00 01 | demo123 |
-| Xodim (toza, testlar uchun) | 90 111 00 02 | demo123 |
+| Xodim (jarayonda, Dilnoza) | 90 111 00 01 | demo123 |
+| Xodim (toza, Jasur) | 90 111 00 02 | demo123 |
 | Admin | — | jamoa rahbaridan so'rang |
 
 ## Stack
 
 Vanilla JS SPA — framework yo'q, build yo'q. Hash routing (`#/course/2`), API bilan `fetch` + cookie sessiya.
-Shriftlar: Google Fonts (Onest). PDF ko'rish: pdf.js (cdnjs, kerak bo'lganda yuklanadi).
+Shriftlar: Google Fonts (Poppins + Inter). PDF ko'rish: pdf.js (cdnjs, kerak bo'lganda yuklanadi).
 
 ## Tuzilma
 
@@ -71,8 +71,14 @@ dev-server.js   — statik fayllar + /api proksi
 - Foydalanuvchi matni har doim `esc()` orqali HTML'ga qo'yiladi.
 - Sahifadan chiqqanda tozalash kerak bo'lsa (taymer, listener, kamera) — `onCleanup(fn)`.
 - Mobil jadvallar: `<table class="table cards">` — telefonda avtomatik kartochkaga aylanadi (`labelTables`).
-- Ranglar va o'lchamlar faqat CSS o'zgaruvchilari orqali (`--primary`, `--ink`, `--accent` ...).
+- Ranglar va o'lchamlar faqat CSS o'zgaruvchilari orqali (`--primary`, `--ink`, `--green` ...).
 
 ## Production
 
 `public/` papkasi backend konteyneriga ulanadi (`lms-backend/docker-compose.yml` → `UI_DIR`), backend uni o'zi beradi — frontend va API bitta domenda. Deploy'dan oldin `index.html` dagi `?v=` raqamini oshiring.
+
+## Avtomatik deploy
+
+`main`'ga push yoki PR merge → GitHub Actions: `node --check` → `index.html`dagi `?v=` commit hash'ga almashtiriladi → `public/` serverga yuboriladi. Qayta build kerak emas, o'zgarish darhol ko'rinadi.
+
+Kerakli secret'lar: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_KNOWN_HOSTS`.

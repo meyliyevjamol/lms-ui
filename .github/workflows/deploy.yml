@@ -1,0 +1,37 @@
+name: Deploy
+
+# main'ga push yoki PR merge qilinganda frontend serverga chiqariladi
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ui
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sintaksis tekshiruvi
+        run: node --check public/app.js && node --check dev-server.js
+
+      - name: Kesh versiyasini yangilash (?v=commit)
+        run: sed -i -E "s/\?v=[0-9a-zA-Z]+/?v=${GITHUB_SHA::8}/g" public/index.html
+
+      - name: SSH sozlash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Serverga yuklash
+        run: tar -c public | ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes root@${{ secrets.DEPLOY_HOST }} deploy-ui
