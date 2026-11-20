@@ -1,0 +1,13 @@
+{
+  "name": "lms-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Malaka LMS — frontend (vanilla JS SPA): xodim kabineti, admin panel, video pleyer, proktoringli test",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "dev:local": "node -e \"process.env.API_URL='http://localhost:3000';require('./dev-server.js')\""
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
