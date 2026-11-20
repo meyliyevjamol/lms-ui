@@ -288,6 +288,7 @@ function empShell(active, inner) {
       <div class="topbar-right">
         ${isAdmin ? '<span class="badge badge-amber">Xodim ko\'rinishi</span><a class="btn btn-sm" href="#/admin">Admin panel</a>' : bellBtn()}
         <a href="#/profile" class="row" style="gap:8px;color:var(--text);font-weight:600">${avatar(state.me.name, 'sm')}<span class="hide-sm">${esc(first)}</span></a>
+        <button class="icon-btn bordered" data-logout title="Chiqish" aria-label="Chiqish">${I.logout}</button>
       </div>
     </div></header>
     ${active === 'home' && !isAdmin ? `<div class="m-hello"><div class="user-cell">${avatar(state.me.name)}<div><span>Xush kelibsiz</span><b>Salom, ${esc(first)}!</b></div></div>${bellBtn()}</div>` : ''}
@@ -1055,7 +1056,7 @@ async function pageProfile() {
         <div><button class="btn btn-primary" type="submit">Saqlash</button></div>
       </form>
     </div>
-    <button class="btn btn-danger btn-block btn-lg m-only" style="margin-top:16px" data-logout>${I.logout}Tizimdan chiqish</button>`));
+    <button class="btn btn-danger btn-lg" style="margin-top:16px;width:100%;max-width:420px" data-logout>${I.logout}Tizimdan chiqish</button>`));
   $('#pf').addEventListener('submit', async (e) => {
     e.preventDefault();
     try { await api('/me/password', { method: 'POST', body: Object.fromEntries(new FormData(e.target)) }); toast("Parol o'zgartirildi", 'success'); e.target.reset(); } catch (err) { toastErr(err); }
