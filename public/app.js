@@ -240,7 +240,7 @@ function lineChart(series, labels, { min = 0, max = 100, threshold = null, heigh
   }
   return s + '</svg>';
 }
-function sparkline(data, color = '#1d4ed8') {
+function sparkline(data, color = '#2f5bff') {
   const v = data.filter((d) => d !== null && d !== undefined);
   if (v.length < 2) return '';
   const mn = Math.min(...v) - 2, mx = Math.max(...v) + 2;
@@ -291,7 +291,6 @@ function empShell(active, inner) {
         <button class="icon-btn bordered" data-logout title="Chiqish" aria-label="Chiqish">${I.logout}</button>
       </div>
     </div></header>
-    ${active === 'home' && !isAdmin ? `<div class="m-hello"><div class="user-cell">${avatar(state.me.name)}<div><span>Xush kelibsiz</span><b>Salom, ${esc(first)}!</b></div></div>${bellBtn()}</div>` : ''}
     <div class="container">${inner}</div>
     ${isAdmin ? '' : tabbar(EMP_NAV, active)}`;
 }
@@ -305,7 +304,43 @@ function bindShell() {
   }));
   $$('[data-bell]').forEach((b) => b.addEventListener('click', openNotifications));
 }
-function render(html) { $app.innerHTML = html; bindShell(); window.scrollTo(0, 0); }
+function render(html) { $app.innerHTML = svgDefs + html; bindShell(); window.scrollTo(0, 0); }
+
+// ---- classic dizayn yordamchilari: banner halqasi, stat kartalar, kurs muqovalari
+const svgDefs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="rgw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffb27f"/></linearGradient></defs></svg>`;
+function ring(p, label, size = 132) {
+  const r = 52, C = 2 * Math.PI * r;
+  return `<div class="ring" style="width:${size}px;height:${size}px"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${r}" stroke="rgba(255,255,255,.22)" stroke-width="11" fill="none"/>
+    <circle cx="60" cy="60" r="${r}" stroke="#fff" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - (p || 0) / 100)}"/></svg>
+    <div class="ring-in"><div><b>${p || 0}%</b><span>${label}</span></div></div></div>`;
+}
+const statCard = (icon, label, value, sub = '', tone = 'indigo', extra = '') => `<div class="card stat tone-${tone}"><div class="stat-ic">${icon}</div>
+  <div style="min-width:0;flex:1"><div class="row between" style="flex-wrap:nowrap"><div class="stat-label">${label}</div>${extra}</div><div class="stat-value">${value}</div>${sub ? `<div class="stat-sub">${sub}</div>` : ''}</div></div>`;
+const COVERS = [
+  'radial-gradient(260px 160px at 100% 0%,rgba(77,123,255,.55),transparent 70%),linear-gradient(135deg,#0b1230 0%,#1d3bb8 100%)',
+  'radial-gradient(260px 160px at 100% 0%,rgba(255,170,110,.5),transparent 70%),linear-gradient(135deg,#2a1206 0%,#e8641c 100%)',
+  'radial-gradient(260px 160px at 100% 0%,rgba(80,230,200,.45),transparent 70%),linear-gradient(135deg,#06262a 0%,#0e8f8a 100%)',
+  'radial-gradient(260px 160px at 100% 0%,rgba(170,150,255,.5),transparent 70%),linear-gradient(135deg,#140d38 0%,#5b45d6 100%)',
+  'radial-gradient(260px 160px at 100% 0%,rgba(255,130,130,.45),transparent 70%),linear-gradient(135deg,#2c0a12 0%,#c9303a 100%)',
+  'radial-gradient(260px 160px at 100% 0%,rgba(120,230,160,.45),transparent 70%),linear-gradient(135deg,#062417 0%,#128a57 100%)',
+];
+const CAT_STYLE = { onboarding: 0, sotuv: 1, farmatsevtika: 2, "ko'nikmalar": 3, xavfsizlik: 4, majburiy: 5 };
+const cover = (id, cat) => { const k = String(cat || '').toLowerCase(); return COVERS[(k in CAT_STYLE ? CAT_STYLE[k] : id) % COVERS.length]; };
+const catIcon = (cat) => ({ onboarding: I.award, sotuv: I.chart, farmatsevtika: I.shield, xavfsizlik: I.shield, majburiy: I.alert, "ko'nikmalar": I.book }[String(cat || '').toLowerCase()] || I.book);
+function courseCard(c) {
+  return `<a class="card course-card" href="#/course/${c.id}">
+    <div class="course-cover" style="background:${cover(c.id, c.category)}">
+      <div class="cover-ic">${c.status === 'completed' ? I.award : catIcon(c.category)}</div>${c.category ? `<span class="cat">${esc(c.category)}</span>` : ''}<div class="big-ic">${catIcon(c.category)}</div>
+      ${empStatus(c).replace(/badge-(gray|blue|green|red|orange)/, 'badge-white')}
+    </div>
+    <div class="course-body">
+      <h3>${esc(c.title)}</h3>
+      <div class="meta-chips"><span class="meta-chip">${I.book}${plural(c.lessonsTotal, 'material')}</span>${c.hasTest ? `<span class="meta-chip">${I.test}Test</span>` : ''}</div>
+      <div><div class="row between small" style="margin-bottom:6px"><span class="muted">Jarayon</span><b>${c.progress}%</b></div>${progressBar(c.progress, c.status === 'completed' ? 'green' : '')}</div>
+      <div class="course-meta"><span>${c.deadline ? (c.status !== 'completed' && daysLeft(c.deadline) < 0 ? `<span class="red">Muddat o'tgan: ${fmtDate(c.deadline)}</span>` : 'Muddat: ' + fmtDate(c.deadline)) : '<span class="faint">Muddatsiz</span>'}</span>
+        <b style="color:var(--primary)">${c.status === 'completed' ? "Ko'rish" : c.status === 'not_started' ? 'Boshlash' : 'Davom etish'} →</b></div>
+    </div></a>`;
+}
 
 async function openNotifications() {
   const list = await api('/my/notifications').catch(() => []);
@@ -320,22 +355,24 @@ async function openNotifications() {
 
 // ================================================================ login
 function pageLogin() {
-  const steps = [['Kirish', 'telefon raqami va parol bilan'], ['Menga tayinlanganlar', 'trening va testlar, muddati bilan'], ["O'rganish", "PDF, video va taqdimotlar"], ['Test topshirish', 'taymer va savollar soni ko\'rinib turadi'], ['Natija', "ball, o'tdi yoki o'tmadi — darhol"]];
   $app.innerHTML = `<div class="login-wrap">
     <div class="login-art">
+      <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
       ${brandHtml()}
       <div>
-        <div class="kicker">${state.companyName ? esc(state.companyName) + ' uchun' : 'Xodimlar uchun'}</div>
-        <h2>Xodimlarni onlayn o'qitish platformasi</h2>
-        <div class="line"></div>
-        <p class="sub">Treninglar, testlar va natijalar bitta tizimda</p>
-        <div class="login-steps">${steps.map(([t, s], i) => `<div><span>${i + 1}</span><div><b>${t}</b> — ${s}</div></div>`).join('')}</div>
+        <h2>Jamoangizni <em>o'qiting</em>, bilimini <em>o'lchang</em></h2>
+        <p class="sub">Video darslar, taqdimotlar va testlar — bitta platformada. Har bir xodimning natijasi real vaqtda ko'z oldingizda.</p>
+        <div class="mock-stage">
+          <div class="mock mock-1"><div class="t">Saqlash qoidalari</div><b>2 / 3 material ko'rildi</b><div class="bar"><i></i></div></div>
+          <div class="mock mock-2"><div class="t">Test natijasi</div><div class="big">92%</div><div class="t">O'tdi ✓</div></div>
+          <div class="mock mock-3"><div class="ic">${I.award}</div><div><b>Sertifikat berildi</b><div class="t">Dilnoza Karimova · bugun</div></div></div>
+        </div>
       </div>
-      <div style="font-size:12.5px;color:#93a3c0">Ilova o'rnatish shart emas · telefon, planshet va kompyuterda ishlaydi</div>
+      <div class="login-feats"><span>${I.video}Video va PDF</span><span>${I.test}Testlar</span><span>${I.chart}Hisobotlar</span><span>${I.telegram}Telegram</span></div>
     </div>
     <div class="login-form"><form class="login-box stack" id="f" autocomplete="on">
       <div class="login-mobile-brand">${brandHtml()}</div>
-      <div><h1>Tizimga kirish</h1><p class="muted" style="margin-top:6px">Telefon raqamingiz va parolingiz bilan kiring</p></div>
+      <div><h1>Xush kelibsiz 👋</h1><p class="muted" style="margin-top:8px">Telefon raqamingiz va parolingiz bilan kiring</p></div>
       <div class="field"><label for="ph">Telefon raqam</label>
         <div class="phone-in"><span>+998</span><input class="input" id="ph" name="phone" type="tel" inputmode="numeric" data-phone maxlength="12" placeholder="90 123 45 67" required autocomplete="tel-national"></div></div>
       <div class="field"><label for="pw">Parol</label><input class="input" id="pw" name="password" type="password" required autocomplete="current-password"></div>
@@ -372,44 +409,49 @@ async function pageHome() {
   render(empShell('home', loading()));
   const [h, tgs] = await Promise.all([api('/my/home'), api('/my/telegram').catch(() => null)]);
   state.unread = h.unread;
+  const list = h.courses;
+  const done = list.filter((c) => c.status === 'completed').length;
+  const active = list.filter((c) => c.status === 'in_progress' || c.status === 'failed').length;
+  const overdue = list.filter((c) => c.overdue).length;
+  const overall = list.length ? Math.round(list.reduce((s, c) => s + c.progress, 0) / list.length) : 0;
+  const sorted = [...list].sort((a, b) => (a.status === 'completed') - (b.status === 'completed') || (a.deadline || '9').localeCompare(b.deadline || '9'));
+  const next = sorted.find((c) => c.status !== 'completed');
   const due = h.dueSoon[0];
   const [dueLabel, dueHref] = due ? dueAction(due) : [];
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Xayrli tong' : hour < 18 ? 'Xayrli kun' : 'Xayrli kech';
+  const first = state.me.name.split(' ')[0];
   render(empShell('home', `
-    <div class="hello-row hide-sm"><div><h1>Salom, ${esc(state.me.name.split(' ')[0])}!</h1><p class="muted" style="margin-top:4px">Sizga tayinlangan treninglar va testlar</p></div>${bellBtn()}</div>
-    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start" id="hgrid">
-      <div class="stack" style="gap:14px">
-        <div class="summary-card">
-          <div class="kicker">${h.month.name} bo'yicha</div>
-          <b>${h.month.total} tadan ${h.month.done} tasi bajarildi</b>
-          ${progressBar(pct(h.month.done, h.month.total))}
-          <div class="foot">${h.avgScore !== null ? `O'rtacha ballingiz: <b style="display:inline;font-size:inherit;font-family:inherit">${h.avgScore}%</b>` : "Hali test topshirmagansiz"}</div>
+    <section class="hero"><div class="hero-row">
+      <div style="flex:1;min-width:240px">
+        <div class="row between" style="flex-wrap:nowrap"><span class="badge badge-white">${greet} 👋</span><span class="m-only">${bellBtn().replace('icon-btn bordered', 'icon-btn btn-glass')}</span></div>
+        <h1 style="margin-top:12px">${esc(first)}, bugun ham <em>bir qadam</em> oldinga!</h1>
+        <p style="margin-top:8px">${next ? `Keyingi trening: <b>${esc(next.title)}</b>` : list.length ? 'Barcha treninglarni tugatdingiz — ajoyib natija!' : "Sizga trening tayinlanganda shu yerda ko'rinadi"}</p>
+        <div class="hero-stats">
+          <div class="hero-stat"><b>${list.length}</b><span>Treninglar</span></div>
+          <div class="hero-stat"><b>${active}</b><span>Jarayonda</span></div>
+          <div class="hero-stat"><b>${done}</b><span>Bajarildi</span></div>
+          ${overdue ? `<div class="hero-stat" style="background:rgba(229,72,77,.3)"><b>${overdue}</b><span>Muddati o'tgan</span></div>` : `<div class="hero-stat"><b>${h.avgScore ?? '—'}${h.avgScore !== null ? '%' : ''}</b><span>O'rtacha ball</span></div>`}
         </div>
-        ${due ? `<div><div class="section-title" style="margin-top:4px"><h2>Muddati yaqin</h2></div>
-          <div class="due-card"><div class="top"><span class="due-ic">${I.test}</span><div style="min-width:0"><b>${esc(due.hasTest ? due.testTitle : due.title)}</b>
-            <div class="meta"><span class="warn">${I.clock}${daysLeft(due.deadline) < 0 ? "Muddat o'tgan" : daysLeft(due.deadline) === 0 ? 'Bugun' : daysLeft(due.deadline) + ' kun qoldi'}</span><span>· ${fmtDate(due.deadline)}</span></div>
-            <div class="meta">${due.hasTest ? `${due.testQuestionCount} savol${due.timeLimitMin ? ' · ' + due.timeLimitMin + ' daqiqa' : ''}` : plural(due.lessonsTotal, 'material')}</div></div></div>
-            <a class="btn btn-primary btn-block" href="${dueHref}">${dueLabel}</a></div></div>` : ''}
-        ${tgs?.enabled && !tgs.linked ? `<div class="card card-pad row" style="gap:12px;flex-wrap:nowrap"><span class="list-ic" style="background:#e8f4fd;color:#229ed9">${I.telegram}</span><div style="flex:1;min-width:0"><b>Telegram orqali eslatmalar</b><div class="small muted">Muddatlar va yangi testlar haqida xabar oling</div></div><a class="btn btn-sm btn-soft" href="#/profile">Ulash</a></div>` : ''}
+        ${next ? `<a class="btn btn-white" style="margin-top:20px" href="#/course/${next.id}">${I.playFill.replace('<svg', '<svg width="15" height="15"')}${next.status === 'not_started' ? "O'qishni boshlash" : 'Davom ettirish'}</a>` : ''}
       </div>
-      <div class="card">
-        <div class="card-head"><h2>Menga tayinlangan</h2><span class="small muted">${h.courses.length} ta</span></div>
-        ${h.courses.length ? h.courses.sort((a, b) => (a.status === 'completed') - (b.status === 'completed') || (a.deadline || '9').localeCompare(b.deadline || '9')).map((c) => courseItem(c)).join('')
-          : `<div class="empty">${I.book}<h3>Hozircha tayinlanmagan</h3><p>Sizga trening tayinlanganda shu yerda ko'rinadi</p></div>`}
-      </div>
-    </div>`));
-  const g = $('#hgrid');
-  const mq = window.matchMedia('(max-width: 900px)');
-  const fit = () => { g.style.gridTemplateColumns = mq.matches ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,1.2fr)'; };
-  fit(); mq.addEventListener('change', fit); onCleanup(() => mq.removeEventListener('change', fit));
+      ${list.length ? ring(overall, 'umumiy', 140) : ''}
+    </div></section>
+    ${due || (tgs?.enabled && !tgs.linked) ? `<div class="grid grid-2" style="margin-bottom:6px">
+      ${due ? `<div class="due-card"><div class="top"><span class="due-ic">${I.clock}</span><div style="min-width:0;flex:1"><div class="small" style="color:var(--amber);font-weight:700">Muddati yaqin</div><b>${esc(due.hasTest ? due.testTitle : due.title)}</b>
+          <div class="meta"><span class="warn">${I.clock}${daysLeft(due.deadline) < 0 ? "Muddat o'tgan" : daysLeft(due.deadline) === 0 ? 'Bugun' : daysLeft(due.deadline) + ' kun qoldi'}</span><span>· ${fmtDate(due.deadline)}</span>${due.hasTest ? `<span>· ${due.testQuestionCount} savol${due.timeLimitMin ? ', ' + due.timeLimitMin + ' daqiqa' : ''}</span>` : ''}</div></div>
+          <a class="btn btn-primary btn-sm" style="margin-top:0" href="${dueHref}">${dueLabel}</a></div></div>` : ''}
+      ${tgs?.enabled && !tgs.linked ? `<div class="card card-pad row" style="gap:12px;flex-wrap:nowrap"><span class="list-ic" style="background:#e8f4fd;color:#229ed9">${I.telegram}</span><div style="flex:1;min-width:0"><b>Telegram orqali eslatmalar</b><div class="small muted">Muddatlar va yangi testlar haqida xabar oling</div></div><a class="btn btn-sm btn-soft" href="#/profile">Ulash</a></div>` : ''}
+    </div>` : ''}
+    ${list.length ? `<div class="section-title"><h2>Mening treninglarim</h2><span class="small muted">${list.length} ta</span></div><div class="grid grid-3">${sorted.map(courseCard).join('')}</div>`
+      : `<div class="card empty">${I.book}<h3>Hozircha tayinlanmagan</h3><p>Sizga trening tayinlanganda shu yerda ko'rinadi</p></div>`}`));
 }
 async function pageTrainings() {
   render(empShell('trainings', loading()));
   const list = await api('/my/courses');
   render(empShell('trainings', `
     <div class="page-head"><div><h1>Treninglar</h1><p class="sub">Sizga tayinlangan o'quv materiallari</p></div></div>
-    <div class="card">${list.length ? list.map((c) => `<a class="list-card" href="#/course/${c.id}"><span class="list-ic ${c.status === 'completed' ? 'green' : ''}">${I.book}</span>
-      <div class="list-body"><b>${esc(c.title)}</b><div class="small">${c.lessonsDone}/${c.lessonsTotal} material ko'rildi${c.deadline ? ' · muddat ' + fmtDate(c.deadline) : ''}</div><div style="margin-top:8px;max-width:320px">${progressBar(pct(c.lessonsDone, c.lessonsTotal), c.lessonsDone === c.lessonsTotal ? 'green' : '')}</div></div>
-      <span class="chev">${I.next}</span></a>`).join('') : `<div class="empty">${I.book}<h3>Treninglar yo'q</h3></div>`}</div>`));
+    ${list.length ? `<div class="grid grid-3">${list.map(courseCard).join('')}</div>` : `<div class="card empty">${I.book}<h3>Treninglar yo'q</h3></div>`}`));
 }
 async function pageTests() {
   render(empShell('tests', loading()));
@@ -452,29 +494,48 @@ async function pageCourse(id) {
   const { course: c, state: st } = await api(`/my/courses/${id}`);
   const next = st.lessons.find((l) => !l.completed && !l.locked);
   const totalMin = Math.round(st.lessons.reduce((a, l) => a + (l.duration || 0) / 60 + (l.pages || (l.type === 'text' ? 2 : 0)) * 1.5, 0));
-  const testBtn = st.passed ? `<a class="btn btn-soft" href="#/attempt/${st.bestAttemptId}">Natijani ko'rish</a>`
-    : st.canStartTest ? `<a class="btn btn-primary" href="#/course/${c.id}/test">${st.openAttemptId ? 'Testni davom ettirish' : st.submitted ? 'Qayta topshirish' : 'Testni boshlash'}</a>` : '';
+  const testLabel = st.openAttemptId ? 'Testni davom ettirish' : st.submitted ? 'Qayta topshirish' : 'Testni boshlash';
+  let cta = '';
+  if (st.status === 'completed') cta = `<a class="btn btn-white" href="#/certificate/${c.id}">${I.award}Sertifikat</a>`;
+  else if (next) cta = `<a class="btn btn-white" href="#/course/${c.id}/lesson/${next.id}">${st.lessonsDone ? 'Davom ettirish' : 'Boshlash'}${I.next}</a>`;
+  else if (st.canStartTest) cta = `<a class="btn btn-white" href="#/course/${c.id}/test">${testLabel}${I.next}</a>`;
+  const stBadge = empStatus({ ...c, ...st, status: st.status, best: c.showResult ? st.best : null, lessonsDone: st.lessonsDone, lessonsTotal: st.lessonsTotal }).replace(/badge-(gray|blue|green|red|orange)/, 'badge-white');
+  const testLocked = !st.materialsOk;
   render(shell('trainings', `
     <a class="back" href="${state.me.role === 'admin' ? `#/admin/trainings/${c.id}` : '#/trainings'}">${I.back}Treninglar</a>
-    <div class="card training-head">
-      <div class="row between" style="align-items:flex-start"><div style="min-width:0;flex:1"><h1>${esc(c.title)}</h1>${c.description ? `<p class="desc">${esc(c.description)}</p>` : ''}</div>
-      ${st.status === 'completed' ? `<a class="btn btn-soft btn-sm" href="#/certificate/${c.id}">${I.award}Sertifikat</a>` : ''}</div>
-      <div class="chips"><span class="pill">${I.book}${plural(st.lessonsTotal, 'material')}</span>${totalMin ? `<span class="pill">${I.clock}~${totalMin} daqiqa</span>` : ''}${deadlineChip(c.deadline, st.status === 'completed')}</div>
-      <div style="margin-top:14px"><div class="row between small" style="margin-bottom:6px"><span class="muted">Jarayon</span><b>${st.progress}%</b></div>${progressBar(st.progress, st.status === 'completed' ? 'green' : '')}</div>
-    </div>
-    <div class="section-title"><h2>Materiallar</h2><span class="small muted">${st.lessonsDone}/${st.lessonsTotal} ko'rildi</span></div>
-    <div>${st.lessons.map((l, i) => {
-      const cur = next && l.id === next.id;
-      const meta = l.completed ? `<span>${matMeta(l)} · <b class="green">Ko'rildi ✓</b></span>` : cur ? `<span class="cur">${matMeta(l)} · ${l.watchedPos ? 'davom ettiring' : 'navbatdagi'}</span>` : `<span>${matMeta(l)}</span>`;
-      return `<div class="mat ${cur ? 'current' : ''} ${l.locked ? 'locked' : ''}">${matIcon(l)}<div class="mat-body"><b>${i + 1}. ${esc(l.title)}</b>${meta}</div>
-        ${l.locked ? `<span class="faint">${I.lock}</span>` : `<div class="row" style="gap:6px;flex-wrap:nowrap">${c.allowDownload && l.type === 'pdf' ? `<a class="btn btn-sm hide-sm" href="/api/files/${l.id}/download">${I.download}Yuklab olish</a>` : ''}<a class="btn btn-sm ${cur ? 'btn-primary' : ''}" href="#/course/${c.id}/lesson/${l.id}">Ko'rish</a></div>`}</div>`;
-    }).join('') || `<div class="card empty">Materiallar hali qo'shilmagan</div>`}</div>
-    ${st.hasTest ? `<div class="section-title"><h2>Yakuniy test</h2></div>
-      <div class="card test-card ${st.materialsOk ? '' : 'locked'}"><span class="list-ic ${st.passed ? 'green' : st.materialsOk ? '' : 'gray'}">${st.materialsOk ? I.test : I.lock}</span>
-        <div style="flex:1;min-width:200px"><b>${esc(c.testTitle)}</b><div class="small muted">${st.testQuestionCount} savol · ${c.timeLimitMin ? c.timeLimitMin + ' daqiqa' : 'vaqt cheklanmagan'} · o'tish bali ${c.passScore}% · ${st.attemptsLeft === null ? 'urinishlar cheklanmagan' : st.attemptsLeft + ' urinish qoldi'}</div>
-        ${st.best !== null ? `<div class="small" style="margin-top:4px">Eng yaxshi natija: <b class="${st.passed ? 'green' : 'red'}">${st.best}%</b></div>` : ''}</div>
-        ${st.materialsOk ? testBtn || (st.status === 'failed' ? '<span class="badge badge-red">Urinishlar tugagan — administratorga murojaat qiling</span>' : '') : `<span class="small muted">${I.lock.replace('<svg', '<svg width="13" height="13" style="vertical-align:-2px"')} Test materiallarni to'liq ko'rgandan keyin ochiladi</span>`}
-      </div>` : ''}`));
+    <section class="course-hero" style="background:${cover(c.id, c.category)}">
+      <div class="row">${stBadge}<span class="badge badge-white">${plural(st.lessonsTotal, 'material')}${st.hasTest ? ' + test' : ''}</span>${totalMin ? `<span class="badge badge-white">~${totalMin} daqiqa</span>` : ''}${c.deadline ? `<span class="badge badge-white">Muddat: ${fmtDeadline(c.deadline)}</span>` : ''}</div>
+      <h1 style="margin-top:14px">${esc(c.title)}</h1>
+      ${c.description ? `<p class="desc">${esc(c.description)}</p>` : ''}
+      <div class="course-hero-foot">
+        <div class="pbox"><div class="row between small" style="margin-bottom:8px;font-weight:600"><span style="opacity:.85">Sizning jarayoningiz</span><b>${st.progress}%</b></div>
+          <div class="progress" style="height:10px;background:rgba(255,255,255,.22)"><i style="width:${st.progress}%;background:#fff"></i></div></div>
+        ${cta}
+      </div>
+    </section>
+    ${st.status === 'failed' && !st.canStartTest ? `<div class="notice amber" style="margin-bottom:16px">${I.info}<div>Urinishlar soni tugadi. Qayta topshirish uchun administratorga murojaat qiling.</div></div>` : ''}
+    <div class="card"><div class="card-head"><h2>Trening tarkibi</h2><span class="small muted">${st.lessonsDone}/${st.lessonsTotal} material</span></div>
+      <div class="steps">
+        ${st.lessons.map((l, i) => {
+          const cur = next && l.id === next.id;
+          const cls = l.completed ? 'done' : l.locked ? 'locked' : cur ? 'current' : '';
+          const icon = l.completed ? I.check : l.locked ? I.lock : MAT[matType(l)].icon;
+          const meta = `${matMeta(l)}${l.completed ? ' · ko\'rildi ✓' : cur ? (l.watchedPos ? ' · davom ettiring' : ' · navbatdagi') : ''}`;
+          const act = l.locked ? '' : `<div class="act">${c.allowDownload && l.type === 'pdf' ? `<a class="btn btn-sm hide-sm" href="/api/files/${l.id}/download" title="Asl faylni yuklab olish">${I.download}</a>` : ''}<a class="btn btn-sm ${cur ? 'btn-primary' : ''}" href="#/course/${c.id}/lesson/${l.id}">Ko'rish</a></div>`;
+          return `<div class="step ${cls}"><div class="step-icon">${icon}</div><div class="step-body"><b>${i + 1}. ${esc(l.title)}</b><span>${meta}</span></div>${act}</div>`;
+        }).join('')}
+        ${st.hasTest ? (() => {
+          const cls = st.passed ? 'done' : testLocked ? 'locked' : !next ? 'current' : '';
+          const meta = [`${st.testQuestionCount} savol`, `o'tish bali ${c.passScore}%`, c.timeLimitMin ? `${c.timeLimitMin} daqiqa` : 'vaqt cheklanmagan', st.attemptsLeft === null ? 'urinishlar cheklanmagan' : `${st.attemptsLeft} urinish qoldi`].join(' · ');
+          const right = st.passed ? `<a class="badge badge-green" href="#/attempt/${st.bestAttemptId}">${st.best !== null && c.showResult ? st.best + '% · ' : ''}O'tdi</a>`
+            : testLocked ? '' : st.canStartTest ? `<div class="act"><a class="btn btn-sm btn-primary" href="#/course/${c.id}/test">${testLabel}</a></div>`
+            : st.status === 'failed' ? `<span class="badge badge-red">${st.best !== null && c.showResult ? st.best + '% · ' : ''}O'tmadi</span>` : '';
+          return `<div class="step ${cls}"><div class="step-icon">${st.passed ? I.check : testLocked ? I.lock : I.test}</div>
+            <div class="step-body"><b>${esc(c.testTitle)}</b><span>${testLocked ? "Materiallarni to'liq ko'rgandan keyin ochiladi · " : ''}${meta}</span></div>${right}</div>`;
+        })() : ''}
+        ${!st.lessons.length && !st.hasTest ? '<div class="empty">Bu treningda hali materiallar yo\'q</div>' : ''}
+      </div>
+    </div>`));
 }
 
 // ================================================================ xodim: material
@@ -825,8 +886,8 @@ async function pageTest(cid) {
   const draw = () => {
     const q = a.questions[idx];
     const sel = answers[q.id] || [];
-    $('#qbox').innerHTML = `<h2>${esc(q.text)}</h2><p class="hint">${q.multi ? 'Bir nechta javobni tanlang' : 'Bitta javobni tanlang'}</p>
-      ${q.options.map((o, j) => `<label class="option"><input type="${q.multi ? 'checkbox' : 'radio'}" name="opt" value="${j}" ${sel.includes(j) ? 'checked' : ''}><span>${esc(o)}</span></label>`).join('')}`;
+    $('#qbox').innerHTML = `<span class="qn">${idx + 1}</span><h2>${esc(q.text)}</h2><p class="hint">${q.multi ? 'Bir nechta javobni tanlang' : 'Bitta javobni tanlang'}</p>
+      ${q.options.map((o, j) => `<label class="option"><input type="${q.multi ? 'checkbox' : 'radio'}" name="opt" value="${j}" ${sel.includes(j) ? 'checked' : ''}><span class="letter">${'ABCDEFGH'[j]}</span><span>${esc(o)}</span></label>`).join('')}`;
     $('#qpos').textContent = `${idx + 1}-savol / ${total}`;
     $('#qcnt').textContent = `${answered()} ta javob berildi`;
     $('.exam-top .progress > i').style.width = `${((idx + 1) / total) * 100}%`;
@@ -995,7 +1056,7 @@ async function pageResult(id) {
       <div class="stack" style="gap:8px;margin-top:20px"><a class="btn btn-block" href="#/results">Mening natijalarim</a><a class="btn btn-primary btn-block" href="#/">Bosh sahifaga qaytish</a></div></div>`));
     return;
   }
-  const color = r.passed ? '#16a34a' : '#dc2626';
+  const color = r.passed ? '#10a56f' : '#e5484d';
   const C = 2 * Math.PI * 64;
   render(shell('results', `
     <div class="card result">
@@ -1090,40 +1151,46 @@ async function adminDashboard() {
   const [d, deps] = await Promise.all([api('/admin/dashboard?' + qs), api('/admin/departments')]);
   const allCourses = await api('/admin/courses');
   const tests = allCourses.filter((c) => c.questionTotal > 0 && c.published);
-  const seg = [['O\'tdi', d.passed, '#16a34a', I.check], ['Hali topshirilmagan', d.pending, '#64748b', ''], ["Muddati o'tgan", d.overdue, '#ea580c', I.clock], ["O'tmadi", d.failed, '#dc2626', I.x]];
+  const seg = [['O\'tdi', d.passed, '#10a56f', I.check], ['Hali topshirilmagan', d.pending, '#64748b', ''], ["Muddati o'tgan", d.overdue, '#ea580c', I.clock], ["O'tmadi", d.failed, '#e5484d', I.x]];
   const labels = d.weekly.map((w) => { const t = new Date(w.weekStart); t.setDate(t.getDate() + 7); return `${pad(t.getDate())}.${pad(t.getMonth() + 1)}`; });
   const passScore = dashFilters.courseId ? (allCourses.find((c) => c.id === dashFilters.courseId)?.passScore || 70) : 70;
   const low = d.histogram.filter((b) => b.to < passScore).reduce((a, b) => a + b.count, 0);
   const near = d.histogram.filter((b) => b.from >= passScore - 10 && b.to < passScore).reduce((a, b) => a + b.count, 0);
   const minY = Math.max(0, Math.min(60, ...d.weekly.flatMap((w) => [w.avgScore, w.passRate]).filter((v) => v !== null).map((v) => Math.floor(v / 10) * 10 - 10)));
   render(adminShell('dash', `
-    <div class="page-head"><div><h1>Bosh sahifa</h1><p class="sub">Ma'lumotlar ${fmtDateTime(d.updatedAt)} holatiga</p></div>
-      <div class="row"><a class="btn" href="/api/admin/report.xlsx?${qs}">${I.download}Hisobot (Excel)</a><button class="btn btn-primary" data-assign>${I.userPlus}Test tayinlash</button></div></div>
+    <section class="hero"><div class="hero-row">
+      <div style="flex:1;min-width:260px">
+        <span class="badge badge-white">Boshqaruv paneli · ${fmtDateTime(d.updatedAt)} holatiga</span>
+        <h1 style="margin-top:12px">Salom, ${esc(state.me.name.split(' ')[0])}!</h1>
+        <p style="margin-top:8px;max-width:560px">${d.assignments ? `Tayinlangan testlarning <b>${d.completionRate}%</b> qismi topshirildi: ${d.assignments} ta tayinlovdan ${d.submitted} tasi.${d.overdue ? ` <b>${d.overdue} ta</b> tayinlovning muddati o'tgan.` : ''}` : "Birinchi treningni yarating va xodimlarga tayinlang."}</p>
+        <div class="row" style="margin-top:20px"><button class="btn btn-white" data-assign>${I.userPlus}Test tayinlash</button><a class="btn btn-glass" href="/api/admin/report.xlsx?${qs}">${I.download}Hisobot (Excel)</a></div>
+      </div>
+      ${ring(d.completionRate, 'bajarildi', 140)}
+    </div></section>
     <div class="row" style="margin-bottom:16px">
       <select class="input" id="fw" style="width:auto">${[[4, 'Oxirgi 4 hafta'], [12, 'Oxirgi 12 hafta'], [26, 'Oxirgi 26 hafta'], [0, 'Butun davr']].map(([v, t]) => `<option value="${v}" ${dashFilters.weeks === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
       <select class="input" id="fd" style="width:auto"><option value="">Barcha bo'limlar</option>${deps.map((x) => `<option ${dashFilters.department === x.name ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
       <select class="input" id="fc" style="width:auto;max-width:280px"><option value="0">Barcha faol testlar</option>${tests.map((c) => `<option value="${c.id}" ${dashFilters.courseId === c.id ? 'selected' : ''}>${esc(c.testTitle)}</option>`).join('')}</select>
     </div>
-    <div class="grid" style="grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);margin-bottom:16px" id="g1">
+    <div class="grid grid-4" style="margin-bottom:16px">
+      ${statCard(I.chart, "O'rtacha ball", `${d.avgScore ?? '—'}${d.avgScore !== null ? '%' : ''}`, deltaHtml(d.deltaAvg), 'indigo', sparkline(d.weekly.map((w) => w.avgScore), '#2f5bff'))}
+      ${statCard(I.checkCircle, "O'tish ko'rsatkichi", `${d.passRate ?? '—'}${d.passRate !== null ? '%' : ''}`, `${d.submitted} tadan ${d.passed} tasi o'tdi · ${deltaHtml(d.deltaPass, '')}`, 'green')}
+      ${statCard(I.users, 'Faol xodimlar', `${d.activeEmployees}<small style="font-size:15px;color:var(--muted);font-weight:600"> / ${d.employees}</small>`, d.inactiveEmployees ? `${d.inactiveEmployees} nafari 14 kundan beri kirmagan` : 'Hammasi faol', 'blue')}
+      ${statCard(I.clock, "Muddati o'tgan", d.overdue, d.overdueThisWeek ? `<span class="delta-down">+${d.overdueThisWeek}</span> shu haftada` : "shu hafta yangi kechikish yo'q", d.overdue ? 'red' : 'amber')}
+    </div>
+    <div style="margin-bottom:16px" id="g1">
       <div class="card card-pad">
-        <div class="kpi-label">Tayinlangan testlar bajarilishi</div>
-        <div class="big-kpi"><b>${d.completionRate}%</b><span class="muted">${d.assignments} ta tayinlovdan ${d.submitted} tasi topshirildi</span></div>
-        <div class="stackbar">${seg.map(([, v, col]) => (v ? `<i style="width:${pct(v, d.assignments)}%;background:${col}"></i>` : '')).join('')}</div>
-        <div class="legend">${seg.map(([t, v, col, ic]) => `<div><i style="background:${col}"></i><span>${ic}${t}</span><b>${v}</b><em>${pct(v, d.assignments)}%</em></div>`).join('')}</div>
-      </div>
-      <div class="grid grid-2" style="gap:12px">
-        <div class="card kpi"><div class="row between" style="flex-wrap:nowrap"><div class="kpi-label">O'rtacha ball</div>${sparkline(d.weekly.map((w) => w.avgScore))}</div><div class="kpi-value">${d.avgScore ?? '—'}${d.avgScore !== null ? '%' : ''}</div><div class="kpi-sub">${deltaHtml(d.deltaAvg)}</div></div>
-        <div class="card kpi"><div class="kpi-label">O'tish ko'rsatkichi</div><div class="kpi-value">${d.passRate ?? '—'}${d.passRate !== null ? '%' : ''}</div><div class="kpi-sub">Topshirgan ${d.submitted} tadan ${d.passed} tasi o'tdi</div><div class="kpi-sub">${deltaHtml(d.deltaPass)}</div></div>
-        <div class="card kpi"><div class="kpi-label">Faol xodimlar</div><div class="kpi-value">${d.activeEmployees} <small>/ ${d.employees}</small></div><div class="kpi-sub">${d.inactiveEmployees ? `${d.inactiveEmployees} nafari 14 kundan beri kirmagan` : 'Hammasi faol'}</div></div>
-        <div class="card kpi warn"><div class="kpi-label">${I.clock}Muddati o'tgan</div><div class="kpi-value">${d.overdue} <small>xodim</small></div><div class="kpi-sub">${d.overdueThisWeek ? `<span class="delta-down">↑ +${d.overdueThisWeek}</span> shu haftada` : 'shu hafta yangi kechikish yo\'q'}</div></div>
+        <div class="row between"><h2>Tayinlovlar holati</h2><span class="small muted">${d.assignments} ta tayinlov</span></div>
+        <div class="stackbar" style="margin-top:14px">${seg.map(([, v, col]) => (v ? `<i style="width:${pct(v, d.assignments)}%;background:${col}"></i>` : '')).join('')}</div>
+        <div class="legend legend4">${seg.map(([t, v, col, ic]) => `<div><i style="background:${col}"></i><span>${ic}${t}</span><b>${v}</b><em>${pct(v, d.assignments)}%</em></div>`).join('')}</div>
       </div>
     </div>
     <div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);margin-bottom:16px" id="g2">
       <div class="card card-pad"><div class="row between" style="margin-bottom:8px"><div><h2>Natijalar dinamikasi</h2><div class="small muted">Haftalik o'rtacha ball va o'tish ko'rsatkichi, %</div></div>
-        <div class="chart-legend"><span><i style="background:#1d4ed8"></i>O'rtacha ball</span><span><i style="background:#ea580c"></i>O'tish ko'rsatkichi</span></div></div>
-        ${lineChart([{ data: d.weekly.map((w) => w.avgScore), color: '#1d4ed8', area: true }, { data: d.weekly.map((w) => w.passRate), color: '#ea580c' }], labels, { min: minY, max: 100, threshold: passScore })}</div>
+        <div class="chart-legend"><span><i style="background:#2f5bff"></i>O'rtacha ball</span><span><i style="background:#ea580c"></i>O'tish ko'rsatkichi</span></div></div>
+        ${lineChart([{ data: d.weekly.map((w) => w.avgScore), color: '#2f5bff', area: true }, { data: d.weekly.map((w) => w.passRate), color: '#ea580c' }], labels, { min: minY, max: 100, threshold: passScore })}</div>
       <div class="card card-pad"><h2>Ballar taqsimoti</h2><div class="small muted">${d.submitted} ta topshirilgan test, ball oralig'i bo'yicha</div>
-        <div class="chart-legend" style="margin-top:8px"><span><i style="background:#1d4ed8;height:8px;width:8px"></i>O'tdi (≥${passScore}%)</span><span><i style="background:#f1a3a3;height:8px;width:8px"></i>O'tmadi (&lt;${passScore}%)</span></div>
+        <div class="chart-legend" style="margin-top:8px"><span><i style="background:#2f5bff;height:8px;width:8px"></i>O'tdi (≥${passScore}%)</span><span><i style="background:#f1a3a3;height:8px;width:8px"></i>O'tmadi (&lt;${passScore}%)</span></div>
         ${histogramHtml(d.histogram, passScore)}
         ${low ? `<p class="small muted" style="margin-top:12px">${low} ta natija o'tish balidan past.${near ? ` Ulardan ${near} tasi ${passScore - 10}–${passScore - 1}% oralig'ida — qayta topshirsa o'tishi mumkin.` : ''}</p>` : ''}</div>
     </div>
@@ -1136,7 +1203,7 @@ async function adminDashboard() {
         ${d.courses.map((c) => `<a class="list-card" href="#/admin/results/${c.id}"><div class="list-body"><b class="ellipsis">${esc(c.testTitle)}</b><div class="small">${c.submitted}/${c.assigned} topshirdi · o'rtacha ${c.avgScore ?? '—'}${c.avgScore !== null ? '%' : ''}${c.overdue ? ` · <span class="red">${c.overdue} ta muddati o'tgan</span>` : ''}</div><div style="margin-top:6px">${progressBar(pct(c.submitted, c.assigned))}</div></div><span class="chev">${I.next}</span></a>`).join('') || `<div class="empty">Faol testlar yo'q</div>`}
       </div>
     </div>`));
-  const fit = () => { const m = window.matchMedia('(max-width: 1000px)').matches; ['g1', 'g2', 'g3'].forEach((id) => { const g = $('#' + id); if (g) g.style.gridTemplateColumns = m ? 'minmax(0,1fr)' : id === 'g1' ? 'minmax(0,1.25fr) minmax(0,1fr)' : id === 'g2' ? 'minmax(0,1.4fr) minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,1fr)'; }); };
+  const fit = () => { const m = window.matchMedia('(max-width: 1000px)').matches; ['g2', 'g3'].forEach((id) => { const g = $('#' + id); if (g) g.style.gridTemplateColumns = m ? 'minmax(0,1fr)' : id === 'g1' ? 'minmax(0,1.25fr) minmax(0,1fr)' : id === 'g2' ? 'minmax(0,1.4fr) minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,1fr)'; }); };
   fit(); window.addEventListener('resize', fit); onCleanup(() => window.removeEventListener('resize', fit));
   $('#fw').addEventListener('change', (e) => { dashFilters.weeks = Number(e.target.value); router(); });
   $('#fd').addEventListener('change', (e) => { dashFilters.department = e.target.value; router(); });
