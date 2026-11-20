@@ -2,7 +2,7 @@
 
 **O‘quv markazi** — korporativ LMS (xodimlarni o'qitish va test qilish) uchun frontend.
 
-Backend va API hujjati: **lms-backend** repozitoriysi → `API.md`.
+Backend va API hujjati: [meyliyevjamol/lms-backend](https://github.com/meyliyevjamol/lms-backend) → [API.md](https://github.com/meyliyevjamol/lms-backend/blob/main/API.md)
 
 Jonli demo: https://lms.194-163-139-167.sslip.io
 
@@ -11,7 +11,7 @@ Jonli demo: https://lms.194-163-139-167.sslip.io
 Faqat **Node.js 18+** kerak. `npm install` shart emas — tashqi kutubxona yo'q.
 
 ```bash
-git clone <lms-ui url>
+git clone https://github.com/meyliyevjamol/lms-ui.git
 cd lms-ui
 npm run dev
 ```
