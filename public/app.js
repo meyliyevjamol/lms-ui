@@ -270,7 +270,7 @@ function adminShell(active, inner) {
       </div>
     </aside>
     <div style="min-width:0">
-      <header class="m-top">${brandHtml()}<a href="#/profile">${avatar(state.me.name, 'sm')}</a></header>
+      <header class="m-top">${brandHtml()}<div class="row" style="gap:8px;flex-wrap:nowrap"><a href="#/profile" title="Profil">${avatar(state.me.name, 'sm')}</a><button class="icon-btn m-out" data-logout title="Chiqish" aria-label="Chiqish">${I.logout}</button></div></header>
       <main class="main">${inner}</main>
     </div>
   </div>
@@ -424,7 +424,7 @@ async function pageHome() {
   render(empShell('home', `
     <section class="hero"><div class="hero-row">
       <div style="flex:1;min-width:240px">
-        <div class="row between" style="flex-wrap:nowrap"><span class="badge badge-white">${greet} 👋</span><span class="m-only">${bellBtn().replace('icon-btn bordered', 'icon-btn btn-glass')}</span></div>
+        <div class="row between" style="flex-wrap:nowrap"><span class="badge badge-white">${greet} 👋</span></div>
         <h1 style="margin-top:12px">${esc(first)}, bugun ham <em>bir qadam</em> oldinga!</h1>
         <p style="margin-top:8px">${next ? `Keyingi trening: <b>${esc(next.title)}</b>` : list.length ? 'Barcha treninglarni tugatdingiz — ajoyib natija!' : "Sizga trening tayinlanganda shu yerda ko'rinadi"}</p>
         <div class="hero-stats">

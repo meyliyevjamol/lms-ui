@@ -926,3 +926,15 @@ a.step:hover .go { background: var(--primary-50); color: var(--primary); transfo
 @media (max-width: 760px) { .legend4 { grid-template-columns: 1fr 1fr; } }
 .brand-logo { display: grid !important; place-items: center; color: #fff; padding: 0; }
 .brand-logo svg { display: block; width: 20px; height: 20px; stroke: #fff; }
+/* telefonda xodim yuqori paneli: logotip, qo'ng'iroqcha, profil, chiqish */
+@media (max-width: 760px) {
+  .topbar { display: block; }
+  .topnav { display: none; }
+  .topbar-in { padding: 8px 14px; gap: 10px; }
+  .topbar .brand > div span { display: none; }
+  .topbar .brand b { font-size: 14px; }
+  .topbar-right { gap: 6px; }
+  .m-top .m-out { color: #c7cde6; border: 1px solid rgba(255, 255, 255, .14); }
+  .m-top .avatar { background: rgba(255, 255, 255, .12); color: #fff; }
+  .exam-mode .topbar { display: none; }
+}
