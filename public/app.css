@@ -938,3 +938,11 @@ a.step:hover .go { background: var(--primary-50); color: var(--primary); transfo
   .m-top .avatar { background: rgba(255, 255, 255, .12); color: #fff; }
   .exam-mode .topbar { display: none; }
 }
+/* classic qatlam telefondagi joylashuvni bosib ketmasin */
+@media (max-width: 760px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .main { padding: 14px 16px calc(92px + env(safe-area-inset-bottom)); }
+  .card-head { padding: 14px 16px; }
+  .card-pad { padding: 16px; }
+  h1 { font-size: 22px; }
+}
